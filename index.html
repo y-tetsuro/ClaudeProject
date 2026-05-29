@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI時短術オンライン講座 | 業務効率を最大化するAI活用スキル</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+      color: #1a1a2e;
+      background: #ffffff;
+      line-height: 1.7;
+    }
+
+    /* ===== ヘッダー ===== */
+    header {
+      background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .logo { font-size: 1.2rem; font-weight: 700; letter-spacing: 0.05em; }
+    .logo span { color: #e94560; }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      margin-left: 24px;
+      font-size: 0.9rem;
+      opacity: 0.85;
+      transition: opacity 0.2s;
+    }
+    nav a:hover { opacity: 1; }
+
+    /* ===== ヒーロー ===== */
+    .hero {
+      background: linear-gradient(135deg, #0f3460 0%, #1a1a5e 50%, #16213e 100%);
+      color: #fff;
+      text-align: center;
+      padding: 100px 24px 80px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: #e94560;
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 16px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      letter-spacing: 0.1em;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 24px;
+    }
+    .hero h1 span { color: #f5c518; }
+    .hero p {
+      font-size: 1.15rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 40px;
+    }
+    .cta-group { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: #e94560;
+      color: #fff;
+      padding: 16px 40px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.05rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(233,69,96,0.4);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(233,69,96,0.5); }
+    .btn-secondary {
+      background: transparent;
+      color: #fff;
+      padding: 16px 40px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.05rem;
+      border: 2px solid rgba(255,255,255,0.6);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-secondary:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
+
+    /* ===== 実績バー ===== */
+    .stats {
+      background: #f5c518;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 900; color: #1a1a2e; }
+    .stat-label { font-size: 0.85rem; color: #333; }
+
+    /* ===== セクション共通 ===== */
+    section { padding: 80px 24px; }
+    .section-inner { max-width: 960px; margin: 0 auto; }
+    .section-title {
+      text-align: center;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 900;
+      margin-bottom: 16px;
+    }
+    .section-subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 48px;
+      font-size: 1rem;
+    }
+
+    /* ===== こんな悩みはありませんか ===== */
+    .problems { background: #f8f9ff; }
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .problem-card {
+      background: #fff;
+      border-left: 4px solid #e94560;
+      padding: 20px 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .problem-card p { font-size: 0.95rem; }
+
+    /* ===== カリキュラム ===== */
+    .curriculum-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .week-card {
+      background: #fff;
+      border: 1px solid #e8e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .week-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.1); transform: translateY(-4px); }
+    .week-num {
+      background: #0f3460;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 12px;
+      border-radius: 12px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .week-title { font-weight: 700; margin-bottom: 8px; font-size: 0.95rem; }
+    .week-desc { font-size: 0.82rem; color: #666; }
+
+    /* ===== 特徴 ===== */
+    .features { background: #f8f9ff; }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 28px;
+    }
+    .feature-card { text-align: center; padding: 32px 20px; }
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .feature-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+    .feature-card p { font-size: 0.88rem; color: #555; }
+
+    /* ===== 料金 ===== */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .price-card {
+      border: 2px solid #e8e8f0;
+      border-radius: 16px;
+      padding: 36px 28px;
+      text-align: center;
+      transition: box-shadow 0.2s;
+    }
+    .price-card.featured {
+      border-color: #e94560;
+      box-shadow: 0 8px 32px rgba(233,69,96,0.15);
+      position: relative;
+    }
+    .featured-badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #e94560;
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 20px;
+      border-radius: 12px;
+    }
+    .price-plan { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; }
+    .price-amount { font-size: 2.8rem; font-weight: 900; color: #0f3460; }
+    .price-amount span { font-size: 1rem; font-weight: 400; color: #666; }
+    .price-desc { font-size: 0.85rem; color: #888; margin: 12px 0 24px; }
+    .price-features { list-style: none; text-align: left; margin-bottom: 28px; }
+    .price-features li { font-size: 0.88rem; padding: 6px 0; border-bottom: 1px solid #f0f0f5; }
+    .price-features li::before { content: "✓ "; color: #27ae60; font-weight: 700; }
+
+    /* ===== 講師 ===== */
+    .instructor { background: #f8f9ff; }
+    .instructor-card {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      flex-wrap: wrap;
+    }
+    .instructor-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0f3460, #e94560);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      flex-shrink: 0;
+    }
+    .instructor-info h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; }
+    .instructor-info .title { color: #666; font-size: 0.9rem; margin-bottom: 14px; }
+    .instructor-info p { font-size: 0.92rem; color: #444; }
+
+    /* ===== FAQ ===== */
+    .faq-list { max-width: 720px; margin: 0 auto; }
+    details {
+      border-bottom: 1px solid #e8e8f0;
+      padding: 20px 0;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.95rem;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    summary::after { content: "+"; font-size: 1.4rem; color: #e94560; }
+    details[open] summary::after { content: "−"; }
+    .faq-answer { margin-top: 12px; font-size: 0.9rem; color: #555; padding-left: 8px; }
+
+    /* ===== CTA セクション ===== */
+    .cta-section {
+      background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+      color: #fff;
+      text-align: center;
+      padding: 100px 24px;
+    }
+    .cta-section h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; margin-bottom: 20px; }
+    .cta-section p { opacity: 0.85; margin-bottom: 40px; font-size: 1.05rem; }
+
+    /* ===== フッター ===== */
+    footer {
+      background: #1a1a2e;
+      color: #aaa;
+      text-align: center;
+      padding: 32px 24px;
+      font-size: 0.85rem;
+    }
+    footer a { color: #aaa; text-decoration: none; margin: 0 12px; }
+    footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header>
+    <div class="logo">AI<span>時短術</span>オンライン講座</div>
+    <nav>
+      <a href="#curriculum">カリキュラム</a>
+      <a href="#features">特徴</a>
+      <a href="#pricing">料金</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+  </header>
+
+  <!-- ヒーロー -->
+  <section class="hero">
+    <div class="hero-badge">🚀 2024年最新AIツール対応</div>
+    <h1>AIで仕事を<span>10倍速く</span>、<br />もっとスマートに。</h1>
+    <p>ChatGPT・Claude・Geminiを使いこなし、<br />毎日の業務を劇的に効率化するスキルを、8週間で身につけよう。</p>
+    <div class="cta-group">
+      <a href="#pricing" class="btn-primary">今すぐ受講する</a>
+      <a href="#curriculum" class="btn-secondary">カリキュラムを見る</a>
+    </div>
+  </section>
+
+  <!-- 実績 -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">2,800+</div>
+      <div class="stat-label">受講者数</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">97%</div>
+      <div class="stat-label">満足度</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">平均3.2時間</div>
+      <div class="stat-label">1日の削減時間</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">8週間</div>
+      <div class="stat-label">完走率82%</div>
+    </div>
+  </div>
+
+  <!-- こんな悩み -->
+  <section class="problems">
+    <div class="section-inner">
+      <h2 class="section-title">こんなお悩みはありませんか？</h2>
+      <p class="section-subtitle">多くのビジネスパーソンが感じている課題を、AIが一気に解決します</p>
+      <div class="problem-grid">
+        <div class="problem-card"><p>「AIって便利そうだけど、何から始めればいいかわからない」</p></div>
+        <div class="problem-card"><p>「ChatGPTを使ってみたが、うまく活用できていない」</p></div>
+        <div class="problem-card"><p>「報告書や提案書の作成に毎回2〜3時間かかっている」</p></div>
+        <div class="problem-card"><p>「周りはAIを使いこなしているのに、自分だけ取り残される不安がある」</p></div>
+        <div class="problem-card"><p>「AIツールが多すぎて、どれを使えばいいかわからない」</p></div>
+        <div class="problem-card"><p>「業務の自動化に興味があるが、プログラミングの知識がない」</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- カリキュラム -->
+  <section id="curriculum">
+    <div class="section-inner">
+      <h2 class="section-title">8週間カリキュラム</h2>
+      <p class="section-subtitle">実践重視のステップアップ型プログラム。学んだその日から業務に活かせます</p>
+      <div class="curriculum-grid">
+        <div class="week-card">
+          <span class="week-num">Week 1</span>
+          <div class="week-title">AI入門</div>
+          <div class="week-desc">主要AIツールの特徴と使い分けを理解する</div>
+        </div>
+        <div class="week-card">
+          <span class="week-num">Week 2</span>
+          <div class="week-title">文章生成</div>
+          <div class="week-desc">メール・報告書・提案書を自動生成する</div>
+        </div>
+        <div class="week-card">
+          <span class="week-num">Week 3</span>
+          <div class="week-title">データ分析</div>
+          <div class="week-desc">ExcelデータをAIで即座に分析・可視化</div>
+        </div>
+        <div class="week-card">
+          <span class="week-num">Week 4</span>
+          <div class="week-title">資料作成</div>
+          <div class="week-desc">プレゼン・画像をAIで高速生成する</div>
+        </div>
+        <div class="week-card">
+          <span class="week-num">Week 5</span>
+          <div class="week-title">業務自動化</div>
+          <div class="week-desc">ノーコード × AI で繰り返し業務を撲滅</div>
+        </div>
+        <div class="week-card">
+          <span class="week-num">Week 6</span>
+          <div class="week-title">情報収集</div>
+          <div class="week-desc">AIによるリサーチ・競合調査の高速化</div>
+        </div>
+        <div class="week-card">
+          <span class="week-num">Week 7</span>
+          <div class="week-title">プロンプト設計</div>
+          <div class="week-desc">出力精度を上げるプロンプトエンジニアリング</div>
+        </div>
+        <div class="week-card">
+          <span class="week-num">Week 8</span>
+          <div class="week-title">実践演習</div>
+          <div class="week-desc">自分の業務に合わせたAI活用プランを策定</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 特徴 -->
+  <section class="features" id="features">
+    <div class="section-inner">
+      <h2 class="section-title">この講座が選ばれる理由</h2>
+      <p class="section-subtitle">他の講座にない4つの強みで、確実にスキルアップできます</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="feature-icon">⚡</span>
+          <h3>即実践可能</h3>
+          <p>学んだ内容をその日の業務で使えるハンズオン形式。理論より実践を重視します。</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📋</span>
+          <h3>職種別テンプレート</h3>
+          <p>営業・マーケ・総務・人事など職種別の即使えるプロンプトテンプレートを提供。</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">💬</span>
+          <h3>Q&Aサポート</h3>
+          <p>受講期間中はSlackコミュニティで質問し放題。卒業生コミュニティへの参加権も付与。</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🔄</span>
+          <h3>コンテンツ更新保証</h3>
+          <p>AIツールの急速な進化に合わせ、カリキュラムを随時アップデート。最新情報を継続提供。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 料金 -->
+  <section id="pricing">
+    <div class="section-inner">
+      <h2 class="section-title">料金プラン</h2>
+      <p class="section-subtitle">目的に合わせた2つのプランをご用意しています</p>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <div class="price-plan">月額プラン</div>
+          <div class="price-amount">¥5,980<span>/月</span></div>
+          <div class="price-desc">まずは試してみたい方に</div>
+          <ul class="price-features">
+            <li>全8週間のコンテンツ</li>
+            <li>職種別テンプレート集</li>
+            <li>Slackコミュニティ参加</li>
+            <li>月1回 グループ Q&A</li>
+          </ul>
+          <a href="#" class="btn-primary" style="display:block;text-align:center;border-radius:8px;padding:14px;">申し込む</a>
+        </div>
+        <div class="price-card featured">
+          <div class="featured-badge">おすすめ</div>
+          <div class="price-plan">買い切りプラン</div>
+          <div class="price-amount">¥49,800<span>/一括</span></div>
+          <div class="price-desc">しっかり習得したい方に</div>
+          <ul class="price-features">
+            <li>全8週間のコンテンツ（永久アクセス）</li>
+            <li>職種別テンプレート集（全50種）</li>
+            <li>Slackコミュニティ（卒業後も参加可）</li>
+            <li>週次 個別 Q&Aセッション</li>
+            <li>コンテンツ更新保証（1年間）</li>
+          </ul>
+          <a href="#" class="btn-primary" style="display:block;text-align:center;border-radius:8px;padding:14px;">申し込む</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 講師 -->
+  <section class="instructor">
+    <div class="section-inner">
+      <h2 class="section-title">講師紹介</h2>
+      <p class="section-subtitle">AI活用の最前線で活躍するプロフェッショナルが指導します</p>
+      <div class="instructor-card">
+        <div class="instructor-avatar">👨‍💻</div>
+        <div class="instructor-info">
+          <h3>山田 太郎</h3>
+          <div class="title">AIビジネス活用コンサルタント / 元Google Japan</div>
+          <p>大手IT企業でAI導入プロジェクトを100件以上主導。現在は中小企業から大手企業まで幅広くAI活用の支援を行う。著書「ビジネスAI入門」はAmazonビジネス書ランキング1位を獲得。YouTube登録者数12万人。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="section-inner">
+      <h2 class="section-title">よくある質問</h2>
+      <div class="faq-list">
+        <details>
+          <summary>AIの知識がまったくない初心者でも受講できますか？</summary>
+          <div class="faq-answer">はい、初心者の方を主な対象として設計されています。Week 1でAIの基礎から丁寧に解説するので、ご安心ください。PCの基本操作（ブラウザの使用・Excelの基礎）ができれば問題ありません。</div>
+        </details>
+        <details>
+          <summary>1日どのくらいの学習時間が必要ですか？</summary>
+          <div class="faq-answer">週2〜3時間（1回30分程度 × 4〜6回）を目安にしています。忙しい方でも続けられるよう、1本の動画は10〜15分程度にまとめています。</div>
+        </details>
+        <details>
+          <summary>受講に必要なソフトウェアや費用はありますか？</summary>
+          <div class="faq-answer">基本的にはChatGPTの無料プランで学習できます。一部コンテンツでは有料プラン（月額$20）を推奨している箇所がありますが、必須ではありません。</div>
+        </details>
+        <details>
+          <summary>受講期間が終わってもコンテンツは見られますか？</summary>
+          <div class="faq-answer">月額プランは退会後アクセス不可となります。買い切りプランは永久に視聴可能です。</div>
+        </details>
+        <details>
+          <summary>返金保証はありますか？</summary>
+          <div class="faq-answer">受講開始から7日以内であれば全額返金保証をご用意しています。安心してお試しください。</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2>AIスキルで、キャリアを加速させよう。</h2>
+    <p>今すぐ申し込んで、業務効率化の第一歩を踏み出しましょう。<br />7日間全額返金保証付き。リスクゼロでスタートできます。</p>
+    <a href="#pricing" class="btn-primary">今すぐ受講する →</a>
+  </section>
+
+  <!-- フッター -->
+  <footer>
+    <p style="margin-bottom:12px;">
+      <a href="#">利用規約</a>
+      <a href="#">プライバシーポリシー</a>
+      <a href="#">特定商取引法に基づく表記</a>
+      <a href="#">お問い合わせ</a>
+    </p>
+    <p>&copy; 2024 AI時短術オンライン講座. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>
