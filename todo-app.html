@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Todo管理アプリ</title>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --border: #dde3ec;
+    --text: #1f2937;
+    --text-sub: #6b7280;
+    --accent: #2563eb;
+    --accent-soft: #eff6ff;
+    --danger: #dc2626;
+    --success: #16a34a;
+    --warning: #d97706;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 24px 16px 64px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  /* ヘッダー */
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+  header h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+  header h1::before { content: "📋"; }
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 8px 16px; text-align: center; box-shadow: var(--shadow); min-width: 90px;
+  }
+  .stat .num { font-size: 1.3rem; font-weight: 700; }
+  .stat .label { font-size: .72rem; color: var(--text-sub); }
+  .stat.total .num { color: var(--accent); }
+  .stat.doing .num { color: var(--warning); }
+  .stat.done .num { color: var(--success); }
+
+  /* ツールバー */
+  .toolbar {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 12px 16px; margin-bottom: 16px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .toolbar input[type="search"], .toolbar select {
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: .9rem; background: #fff; color: var(--text);
+  }
+  .toolbar input[type="search"] { flex: 1; min-width: 180px; }
+  .toolbar input:focus, .toolbar select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .spacer { flex: 1; }
+
+  button {
+    font-family: inherit; font-size: .9rem; border: none; border-radius: 8px;
+    padding: 8px 16px; cursor: pointer; transition: filter .15s, background .15s;
+  }
+  button:hover { filter: brightness(.95); }
+  .btn-primary { background: var(--accent); color: #fff; font-weight: 600; }
+  .btn-ghost { background: transparent; color: var(--text-sub); border: 1px solid var(--border); }
+  .btn-icon { background: transparent; padding: 4px 8px; font-size: 1rem; }
+  .btn-icon:hover { background: var(--accent-soft); }
+
+  /* テーブル */
+  .table-wrap {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  thead th {
+    background: #f8fafc; color: var(--text-sub); font-size: .78rem; font-weight: 600;
+    text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--border);
+    white-space: nowrap; user-select: none;
+  }
+  thead th.sortable { cursor: pointer; }
+  thead th.sortable:hover { color: var(--accent); }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: .88rem; vertical-align: top; }
+  tbody tr:hover { background: #f9fbff; }
+  tbody tr.done td { color: var(--text-sub); }
+  tbody tr.done .task-title { text-decoration: line-through; }
+  td.col-no { color: var(--text-sub); white-space: nowrap; }
+  td.col-check { text-align: center; }
+  td.col-check input { width: 17px; height: 17px; cursor: pointer; accent-color: var(--success); }
+  .task-title { font-weight: 600; white-space: pre-wrap; }
+  .task-detail, .task-note { white-space: pre-wrap; color: var(--text-sub); font-size: .82rem; }
+  .task-detail a, .task-note a { color: var(--accent); word-break: break-all; }
+  td.col-actions { white-space: nowrap; text-align: right; }
+
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: .75rem; font-weight: 600; white-space: nowrap;
+  }
+  .badge.prio { background: var(--accent-soft); color: var(--accent); }
+  .badge.prio-high { background: #fee2e2; color: var(--danger); }
+  .badge.cat { background: #f1f5f9; color: #475569; }
+  .badge.time { background: #fef3c7; color: #92400e; }
+  .badge.status-todo { background: #f1f5f9; color: #64748b; }
+  .badge.status-doing { background: #fef3c7; color: var(--warning); }
+  .badge.status-done { background: #dcfce7; color: var(--success); }
+
+  .empty { text-align: center; padding: 48px 16px; color: var(--text-sub); }
+  .empty .icon { font-size: 2.4rem; margin-bottom: 8px; }
+
+  /* モーダル */
+  dialog {
+    border: none; border-radius: var(--radius); box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    padding: 0; width: min(560px, 92vw);
+  }
+  dialog::backdrop { background: rgba(15,23,42,.45); }
+  .modal-head { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 1.05rem; }
+  .modal-body { padding: 20px; display: grid; gap: 14px; }
+  .field { display: grid; gap: 4px; }
+  .field label { font-size: .8rem; font-weight: 600; color: var(--text-sub); }
+  .field input, .field select, .field textarea {
+    font-family: inherit; font-size: .9rem; padding: 8px 12px;
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+  }
+  .field textarea { resize: vertical; min-height: 72px; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .modal-foot { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+  footer { margin-top: 16px; font-size: .78rem; color: var(--text-sub); text-align: center; }
+
+  @media (max-width: 640px) {
+    .field-row { grid-template-columns: 1fr; }
+    header h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Todo管理アプリ</h1>
+    <div class="stats">
+      <div class="stat total"><div class="num" id="statTotal">0</div><div class="label">全タスク</div></div>
+      <div class="stat doing"><div class="num" id="statDoing">0</div><div class="label">進行中</div></div>
+      <div class="stat done"><div class="num" id="statDone">0</div><div class="label">完了</div></div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <input type="search" id="searchBox" placeholder="🔍 キーワード検索（内容・カテゴリ・詳細）">
+    <select id="filterCategory"><option value="">カテゴリ: すべて</option></select>
+    <select id="filterStatus">
+      <option value="">状態: すべて</option>
+      <option value="todo">未着手</option>
+      <option value="doing">進行中</option>
+      <option value="done">完了</option>
+    </select>
+    <span class="spacer"></span>
+    <button class="btn-ghost" id="exportBtn">CSV出力</button>
+    <button class="btn-primary" id="addBtn">＋ タスク追加</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px"></th>
+          <th class="sortable" data-sort="no" style="width:56px">No. <span class="arrow"></span></th>
+          <th class="sortable" data-sort="priority" style="width:90px">優先順位 <span class="arrow"></span></th>
+          <th style="width:140px">カテゴリ</th>
+          <th style="width:110px">作業予定時間</th>
+          <th>内容</th>
+          <th>詳細</th>
+          <th style="width:100px">状態</th>
+          <th style="width:90px"></th>
+        </tr>
+      </thead>
+      <tbody id="taskBody"></tbody>
+    </table>
+    <div class="empty" id="emptyState" hidden>
+      <div class="icon">🗒️</div>
+      <p>タスクがありません。「＋ タスク追加」から登録してください。</p>
+    </div>
+  </div>
+
+  <footer>データはこのブラウザ（localStorage）に自動保存されます。</footer>
+</div>
+
+<!-- タスク追加・編集モーダル -->
+<dialog id="taskDialog">
+  <form method="dialog" id="taskForm">
+    <div class="modal-head" id="dialogTitle">タスク追加</div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field">
+          <label for="inpPriority">優先順位</label>
+          <input type="text" id="inpPriority" placeholder="例: 1 / 高 / 担当名">
+        </div>
+        <div class="field">
+          <label for="inpCategory">カテゴリ</label>
+          <input type="text" id="inpCategory" list="categoryList" placeholder="例: 経理">
+          <datalist id="categoryList"></datalist>
+        </div>
+        <div class="field">
+          <label for="inpTime">作業予定時間</label>
+          <input type="text" id="inpTime" placeholder="例: 2h / 30分">
+        </div>
+      </div>
+      <div class="field">
+        <label for="inpTitle">内容 <span style="color:var(--danger)">*</span></label>
+        <textarea id="inpTitle" required placeholder="タスクの内容"></textarea>
+      </div>
+      <div class="field">
+        <label for="inpDetail">詳細</label>
+        <textarea id="inpDetail" placeholder="補足・メモ・参考URLなど"></textarea>
+      </div>
+      <div class="field">
+        <label for="inpStatus">状態</label>
+        <select id="inpStatus">
+          <option value="todo">未着手</option>
+          <option value="doing">進行中</option>
+          <option value="done">完了</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn-ghost" id="cancelBtn">キャンセル</button>
+      <button type="submit" class="btn-primary" id="saveBtn">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'todoAppTasks_v1';
+  const STATUS_LABEL = { todo: '未着手', doing: '進行中', done: '完了' };
+
+  // 見本スプレッドシートに基づく初期サンプルデータ
+  const SAMPLE_TASKS = [
+    { priority: '1', category: '書類確認', time: '', title: 'キーサンの書類を読む', detail: '日本政策金融公庫に出す書類これでいいかの確認。公庫に提出する必要書類の確認、キーサンが何をしたいかを確認する。\nhttps://drive.google.com/drive/folders/1I9At4neQWaSEeazaRmvO8PTCml82eG1T', status: 'todo' },
+    { priority: '2', category: '経理', time: '', title: '売上の確認、整理', detail: '売上管理', status: 'todo' },
+    { priority: '3', category: '経理', time: '', title: '予算の策定', detail: 'Moneyforwardをさやに共有', status: 'todo' },
+    { priority: '4', category: '法務', time: '', title: '新法人設立に関するリスク洗い出し', detail: '', status: 'todo' },
+    { priority: '5', category: '経理', time: '', title: '経費の整理', detail: '', status: 'todo' },
+    { priority: '6', category: '経理', time: '', title: '補助金の使い方', detail: '', status: 'todo' },
+    { priority: '7', category: '資料作成', time: '', title: '資料作成（セミナー用などなど）', detail: '', status: 'todo' },
+    { priority: '8', category: 'マーケティング', time: '', title: 'ウェブサイトの更新', detail: '', status: 'todo' },
+    { priority: '9', category: 'マーケティング', time: '', title: 'Google広告の運用の現状把握', detail: '', status: 'todo' },
+    { priority: '10', category: '事業企画', time: '', title: '採用定着士に関して', detail: '', status: 'todo' },
+    { priority: '', category: 'マーケティング', time: '', title: 'X活用', detail: 'URLをショートにしてリンクを飛ばす', status: 'todo' },
+    { priority: '', category: 'マーケティング', time: '', title: 'ウェブサイトのブログ', detail: '①ペルソナ設定 ②テーマ設定（出入国在留管理庁、法務省、厚労省、WAM NETから情報収集） ③タイトル検討', status: 'todo' },
+  ];
+
+  let tasks = load();
+  let sortKey = 'no';
+  let sortAsc = true;
+  let editingId = null;
+
+  const $ = (sel) => document.querySelector(sel);
+  const taskBody = $('#taskBody');
+  const dialog = $('#taskDialog');
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* 破損時はサンプルで初期化 */ }
+    return SAMPLE_TASKS.map((t, i) => ({ id: 'seed-' + i, createdAt: i, ...t }));
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // URLをリンク化（エスケープ後に適用）
+  function linkify(escaped) {
+    return escaped.replace(/(https?:\/\/[^\s<]+)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  }
+
+  function priorityRank(p) {
+    const n = parseInt(p, 10);
+    if (!isNaN(n)) return n;
+    if (p === '高') return 0.1;
+    if (p === '中') return 500;
+    if (p === '低') return 900;
+    return p ? 1000 : 2000; // 文字列指定 → 数値の後ろ、未設定 → 最後
+  }
+
+  function visibleTasks() {
+    const q = $('#searchBox').value.trim().toLowerCase();
+    const cat = $('#filterCategory').value;
+    const st = $('#filterStatus').value;
+    let list = tasks.filter((t) => {
+      if (cat && t.category !== cat) return false;
+      if (st && t.status !== st) return false;
+      if (q) {
+        const hay = [t.title, t.category, t.detail, t.priority].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    const dir = sortAsc ? 1 : -1;
+    if (sortKey === 'priority') {
+      list.sort((a, b) => (priorityRank(a.priority) - priorityRank(b.priority)) * dir || a.createdAt - b.createdAt);
+    } else {
+      list.sort((a, b) => (a.createdAt - b.createdAt) * dir);
+    }
+    return list;
+  }
+
+  function render() {
+    const list = visibleTasks();
+    taskBody.innerHTML = list.map((t, i) => {
+      const no = tasks.indexOf(t) + 1;
+      const prioClass = ['1', '2', '3', '高'].includes(String(t.priority).trim()) ? 'prio-high' : '';
+      return `
+      <tr class="${t.status === 'done' ? 'done' : ''}" data-id="${t.id}">
+        <td class="col-check"><input type="checkbox" ${t.status === 'done' ? 'checked' : ''} title="完了にする" data-act="toggle"></td>
+        <td class="col-no">${no}</td>
+        <td>${t.priority ? `<span class="badge prio ${prioClass}">${escapeHtml(t.priority)}</span>` : ''}</td>
+        <td>${t.category ? `<span class="badge cat">${escapeHtml(t.category)}</span>` : ''}</td>
+        <td>${t.time ? `<span class="badge time">${escapeHtml(t.time)}</span>` : ''}</td>
+        <td><div class="task-title">${linkify(escapeHtml(t.title))}</div></td>
+        <td><div class="task-detail">${linkify(escapeHtml(t.detail))}</div></td>
+        <td><span class="badge status-${t.status}" data-act="cycle" style="cursor:pointer" title="クリックで状態切替">${STATUS_LABEL[t.status]}</span></td>
+        <td class="col-actions">
+          <button class="btn-icon" data-act="edit" title="編集">✏️</button>
+          <button class="btn-icon" data-act="delete" title="削除">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    $('#emptyState').hidden = list.length > 0;
+    $('#statTotal').textContent = tasks.length;
+    $('#statDoing').textContent = tasks.filter((t) => t.status === 'doing').length;
+    $('#statDone').textContent = tasks.filter((t) => t.status === 'done').length;
+    renderCategoryOptions();
+  }
+
+  function renderCategoryOptions() {
+    const cats = [...new Set(tasks.map((t) => t.category).filter(Boolean))].sort();
+    const sel = $('#filterCategory');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">カテゴリ: すべて</option>' +
+      cats.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    if (cats.includes(current)) sel.value = current;
+    $('#categoryList').innerHTML = cats.map((c) => `<option value="${escapeHtml(c)}">`).join('');
+  }
+
+  function openDialog(task) {
+    editingId = task ? task.id : null;
+    $('#dialogTitle').textContent = task ? 'タスク編集' : 'タスク追加';
+    $('#inpPriority').value = task?.priority ?? '';
+    $('#inpCategory').value = task?.category ?? '';
+    $('#inpTime').value = task?.time ?? '';
+    $('#inpTitle').value = task?.title ?? '';
+    $('#inpDetail').value = task?.detail ?? '';
+    $('#inpStatus').value = task?.status ?? 'todo';
+    dialog.showModal();
+    $('#inpTitle').focus();
+  }
+
+  // イベント
+  $('#addBtn').addEventListener('click', () => openDialog(null));
+  $('#cancelBtn').addEventListener('click', () => dialog.close());
+
+  $('#taskForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = {
+      priority: $('#inpPriority').value.trim(),
+      category: $('#inpCategory').value.trim(),
+      time: $('#inpTime').value.trim(),
+      title: $('#inpTitle').value.trim(),
+      detail: $('#inpDetail').value.trim(),
+      status: $('#inpStatus').value,
+    };
+    if (!data.title) return;
+    if (editingId) {
+      const t = tasks.find((t) => t.id === editingId);
+      Object.assign(t, data);
+    } else {
+      tasks.push({ id: 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), createdAt: Date.now(), ...data });
+    }
+    save();
+    render();
+    dialog.close();
+  });
+
+  taskBody.addEventListener('click', (e) => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (!act) return;
+    const id = e.target.closest('tr').dataset.id;
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    if (act === 'toggle') {
+      task.status = e.target.checked ? 'done' : 'todo';
+    } else if (act === 'cycle') {
+      task.status = { todo: 'doing', doing: 'done', done: 'todo' }[task.status];
+    } else if (act === 'edit') {
+      openDialog(task);
+      return;
+    } else if (act === 'delete') {
+      if (!confirm(`「${task.title}」を削除しますか？`)) return;
+      tasks = tasks.filter((t) => t.id !== id);
+    }
+    save();
+    render();
+  });
+
+  ['searchBox', 'filterCategory', 'filterStatus'].forEach((id) => {
+    $('#' + id).addEventListener('input', render);
+  });
+
+  document.querySelectorAll('th.sortable').forEach((th) => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      if (sortKey === key) { sortAsc = !sortAsc; } else { sortKey = key; sortAsc = true; }
+      document.querySelectorAll('th.sortable .arrow').forEach((a) => (a.textContent = ''));
+      th.querySelector('.arrow').textContent = sortAsc ? '▲' : '▼';
+      render();
+    });
+  });
+
+  $('#exportBtn').addEventListener('click', () => {
+    const header = ['No.', '優先順位', 'カテゴリ', '作業予定時間', '内容', '詳細', '状態'];
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const rows = tasks.map((t, i) =>
+      [i + 1, t.priority, t.category, t.time, t.title, t.detail, STATUS_LABEL[t.status]].map(esc).join(','));
+    const csv = '﻿' + [header.map(esc).join(','), ...rows].join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = 'todo.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
