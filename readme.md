@@ -44,6 +44,7 @@ ClaudeProject/
 ├── readme.md        # このファイル
 ├── index.html       # ランディングページ
 ├── todo.md          # 開発・企画タスク管理
+├── todo-app.html    # Todo管理アプリ（ブラウザで開くだけで使用可）
 ├── assets/
 │   ├── css/
 │   ├── js/
