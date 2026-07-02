@@ -30,7 +30,7 @@
   .container { max-width: 1200px; margin: 0 auto; }
 
   /* ヘッダー */
-  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
   header h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
   header h1::before { content: "📋"; }
   .stats { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -43,6 +43,16 @@
   .stat.total .num { color: var(--accent); }
   .stat.doing .num { color: var(--warning); }
   .stat.done .num { color: var(--success); }
+
+  /* タブ */
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 2px solid var(--border); }
+  .tab {
+    background: transparent; border: none; border-bottom: 3px solid transparent; border-radius: 0;
+    padding: 10px 20px; font-size: .95rem; font-weight: 600; color: var(--text-sub); cursor: pointer;
+    margin-bottom: -2px;
+  }
+  .tab:hover { color: var(--accent); filter: none; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
   /* ツールバー */
   .toolbar {
@@ -64,6 +74,7 @@
   }
   button:hover { filter: brightness(.95); }
   .btn-primary { background: var(--accent); color: #fff; font-weight: 600; }
+  .btn-ai { background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; font-weight: 600; }
   .btn-ghost { background: transparent; color: var(--text-sub); border: 1px solid var(--border); }
   .btn-icon { background: transparent; padding: 4px 8px; font-size: 1rem; }
   .btn-icon:hover { background: var(--accent-soft); }
@@ -73,7 +84,7 @@
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     box-shadow: var(--shadow); overflow-x: auto;
   }
-  table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  table { width: 100%; border-collapse: collapse; min-width: 960px; }
   thead th {
     background: #f8fafc; color: var(--text-sub); font-size: .78rem; font-weight: 600;
     text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--border);
@@ -85,6 +96,10 @@
   tbody tr:hover { background: #f9fbff; }
   tbody tr.done td { color: var(--text-sub); }
   tbody tr.done .task-title { text-decoration: line-through; }
+  tbody tr.drop-above td { border-top: 3px solid var(--accent); }
+  tbody tr.dragging { opacity: .4; }
+  td.col-handle { cursor: grab; color: #cbd5e1; text-align: center; white-space: nowrap; width: 28px; user-select: none; }
+  td.col-handle:hover { color: var(--accent); }
   td.col-no { color: var(--text-sub); white-space: nowrap; }
   td.col-check { text-align: center; }
   td.col-check input { width: 17px; height: 17px; cursor: pointer; accent-color: var(--success); }
@@ -92,6 +107,14 @@
   .task-detail, .task-note { white-space: pre-wrap; color: var(--text-sub); font-size: .82rem; }
   .task-detail a, .task-note a { color: var(--accent); word-break: break-all; }
   td.col-actions { white-space: nowrap; text-align: right; }
+  td[data-field] { cursor: text; }
+  td[data-field]:hover { box-shadow: inset 0 0 0 1px var(--border); border-radius: 4px; }
+  .inline-input, .inline-textarea {
+    font-family: inherit; font-size: .88rem; width: 100%; min-width: 70px;
+    padding: 4px 6px; border: 1px solid var(--accent); border-radius: 6px; outline: none;
+  }
+  .inline-textarea { min-height: 60px; resize: vertical; }
+  .empty-cell { color: #cbd5e1; font-size: .78rem; }
 
   .badge {
     display: inline-block; padding: 2px 10px; border-radius: 999px;
@@ -108,6 +131,55 @@
   .empty { text-align: center; padding: 48px 16px; color: var(--text-sub); }
   .empty .icon { font-size: 2.4rem; margin-bottom: 8px; }
 
+  /* マトリクス */
+  #matrixView { display: none; }
+  .matrix-legend { font-size: .8rem; color: var(--text-sub); margin-bottom: 10px; }
+  .matrix-grid {
+    display: grid; grid-template-columns: 28px 1fr 1fr; grid-template-rows: 28px 1fr 1fr;
+    gap: 10px;
+  }
+  .axis { display: flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 700; color: var(--text-sub); }
+  .axis.vertical { writing-mode: vertical-rl; }
+  .quadrant {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); min-height: 220px; padding: 12px; transition: background .15s, border-color .15s;
+  }
+  .quadrant.drag-over { border: 2px dashed var(--accent); background: var(--accent-soft); }
+  .quadrant h3 { font-size: .9rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .quadrant .q-hint { font-size: .72rem; font-weight: 400; color: var(--text-sub); }
+  .quadrant.q1 { border-top: 4px solid #dc2626; }
+  .quadrant.q2 { border-top: 4px solid #2563eb; }
+  .quadrant.q3 { border-top: 4px solid #d97706; }
+  .quadrant.q4 { border-top: 4px solid #9ca3af; }
+  .tray {
+    margin-top: 12px; background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius);
+    padding: 12px; min-height: 80px; transition: background .15s, border-color .15s;
+  }
+  .tray.drag-over { border: 2px dashed var(--accent); background: var(--accent-soft); }
+  .tray h3 { font-size: .85rem; color: var(--text-sub); margin-bottom: 8px; }
+  .tray .cards { display: flex; flex-wrap: wrap; gap: 8px; }
+  .quadrant .cards { display: flex; flex-direction: column; gap: 8px; }
+  .card {
+    background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06); cursor: grab; font-size: .84rem;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .card:active { cursor: grabbing; }
+  .card.dragging { opacity: .4; }
+  .card.done { opacity: .55; }
+  .card.done .card-title { text-decoration: line-through; }
+  .card input[type="checkbox"] { width: 15px; height: 15px; margin-top: 3px; cursor: pointer; accent-color: var(--success); flex-shrink: 0; }
+  .card-title { font-weight: 600; }
+  .card-meta { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+  .card-meta .badge { font-size: .68rem; padding: 1px 8px; }
+  .tray .card { max-width: 260px; }
+  .done-zone {
+    margin-top: 12px; border: 2px dashed #86efac; border-radius: var(--radius); background: #f0fdf4;
+    padding: 14px; text-align: center; color: var(--success); font-weight: 600; font-size: .9rem;
+    transition: background .15s;
+  }
+  .done-zone.drag-over { background: #dcfce7; border-color: var(--success); }
+
   /* モーダル */
   dialog {
     border: none; border-radius: var(--radius); box-shadow: 0 20px 50px rgba(0,0,0,.25);
@@ -115,7 +187,7 @@
   }
   dialog::backdrop { background: rgba(15,23,42,.45); }
   .modal-head { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 1.05rem; }
-  .modal-body { padding: 20px; display: grid; gap: 14px; }
+  .modal-body { padding: 20px; display: grid; gap: 14px; max-height: 70vh; overflow-y: auto; }
   .field { display: grid; gap: 4px; }
   .field label { font-size: .8rem; font-weight: 600; color: var(--text-sub); }
   .field input, .field select, .field textarea {
@@ -125,13 +197,42 @@
   .field textarea { resize: vertical; min-height: 72px; }
   .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .field-row.two { grid-template-columns: 1fr 1fr; }
   .modal-foot { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* 優先度チップ */
+  .prio-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .prio-chips button {
+    padding: 4px 12px; font-size: .8rem; border: 1px solid var(--border); background: #fff; border-radius: 999px;
+  }
+  .prio-chips button:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* AI一括入力 */
+  #aiDialog { width: min(760px, 94vw); }
+  .ai-note { font-size: .78rem; color: var(--text-sub); }
+  .ai-key-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ai-key-row input { flex: 1; min-width: 200px; font-family: inherit; font-size: .85rem; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; }
+  details.ai-settings summary { cursor: pointer; font-size: .8rem; color: var(--text-sub); font-weight: 600; }
+  details.ai-settings { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: #fafbfd; }
+  details.ai-settings[open] summary { margin-bottom: 8px; }
+  .preview-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  .preview-wrap table { min-width: 640px; }
+  .preview-wrap th { position: sticky; top: 0; }
+  .preview-wrap td { padding: 6px 8px; }
+  .preview-wrap input, .preview-wrap select {
+    font-family: inherit; font-size: .82rem; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; width: 100%;
+  }
+  .preview-wrap input.w-s { width: 60px; }
+  .ai-status { font-size: .82rem; color: var(--text-sub); }
+  .ai-status.error { color: var(--danger); }
 
   footer { margin-top: 16px; font-size: .78rem; color: var(--text-sub); text-align: center; }
 
-  @media (max-width: 640px) {
-    .field-row { grid-template-columns: 1fr; }
+  @media (max-width: 720px) {
+    .field-row, .field-row.two { grid-template-columns: 1fr; }
     header h1 { font-size: 1.2rem; }
+    .matrix-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+    .axis { display: none; }
   }
 </style>
 </head>
@@ -146,6 +247,11 @@
     </div>
   </header>
 
+  <div class="tabs">
+    <button class="tab active" data-view="list">📝 リスト</button>
+    <button class="tab" data-view="matrix">🧭 時間管理マトリクス</button>
+  </div>
+
   <div class="toolbar">
     <input type="search" id="searchBox" placeholder="🔍 キーワード検索（内容・カテゴリ・詳細）">
     <select id="filterCategory"><option value="">カテゴリ: すべて</option></select>
@@ -157,33 +263,70 @@
     </select>
     <span class="spacer"></span>
     <button class="btn-ghost" id="exportBtn">CSV出力</button>
+    <button class="btn-ai" id="aiBtn">✨ AI一括入力</button>
     <button class="btn-primary" id="addBtn">＋ タスク追加</button>
   </div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th style="width:36px"></th>
-          <th class="sortable" data-sort="no" style="width:56px">No. <span class="arrow"></span></th>
-          <th class="sortable" data-sort="priority" style="width:90px">優先順位 <span class="arrow"></span></th>
-          <th style="width:140px">カテゴリ</th>
-          <th style="width:110px">作業予定時間</th>
-          <th>内容</th>
-          <th>詳細</th>
-          <th style="width:100px">状態</th>
-          <th style="width:90px"></th>
-        </tr>
-      </thead>
-      <tbody id="taskBody"></tbody>
-    </table>
-    <div class="empty" id="emptyState" hidden>
-      <div class="icon">🗒️</div>
-      <p>タスクがありません。「＋ タスク追加」から登録してください。</p>
+  <!-- リストビュー -->
+  <div id="listView">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:28px" title="ドラッグで並べ替え"></th>
+            <th style="width:36px"></th>
+            <th style="width:52px">No.</th>
+            <th class="sortable" data-sort="priority" style="width:90px">優先順位 <span class="arrow">▲</span></th>
+            <th style="width:140px">カテゴリ</th>
+            <th style="width:110px">作業予定時間</th>
+            <th>内容</th>
+            <th>詳細</th>
+            <th style="width:100px">状態</th>
+            <th style="width:90px"></th>
+          </tr>
+        </thead>
+        <tbody id="taskBody"></tbody>
+      </table>
+      <div class="empty" id="emptyState" hidden>
+        <div class="icon">🗒️</div>
+        <p>タスクがありません。「＋ タスク追加」または「✨ AI一括入力」から登録してください。</p>
+      </div>
     </div>
+    <footer>セルをクリックすると直接編集できます／左端の「⋮⋮」をドラッグして並べ替えると優先順位が自動で振り直されます。</footer>
   </div>
 
-  <footer>データはこのブラウザ（localStorage）に自動保存されます。</footer>
+  <!-- マトリクスビュー -->
+  <div id="matrixView">
+    <p class="matrix-legend">カードをドラッグ＆ドロップで移動すると「緊急度・重要度」が変わります。カードをクリックすると編集できます。</p>
+    <div class="matrix-grid">
+      <div></div>
+      <div class="axis">← 緊急 →</div>
+      <div class="axis">← 緊急でない →</div>
+      <div class="axis vertical">← 重要 →</div>
+      <div class="quadrant q1" data-quad="q1">
+        <h3>🔥 第1領域 <span class="q-hint">緊急×重要｜今すぐやる</span></h3>
+        <div class="cards"></div>
+      </div>
+      <div class="quadrant q2" data-quad="q2">
+        <h3>🌱 第2領域 <span class="q-hint">緊急でない×重要｜計画してやる</span></h3>
+        <div class="cards"></div>
+      </div>
+      <div class="axis vertical">← 重要でない →</div>
+      <div class="quadrant q3" data-quad="q3">
+        <h3>⚡ 第3領域 <span class="q-hint">緊急×重要でない｜任せる・すき間で</span></h3>
+        <div class="cards"></div>
+      </div>
+      <div class="quadrant q4" data-quad="q4">
+        <h3>💤 第4領域 <span class="q-hint">緊急でない×重要でない｜やらない・後回し</span></h3>
+        <div class="cards"></div>
+      </div>
+    </div>
+    <div class="tray" data-quad="none">
+      <h3>📥 未分類（ここからドラッグして4象限に配置）</h3>
+      <div class="cards"></div>
+    </div>
+    <div class="done-zone" id="doneZone">✓ ここにドロップで完了</div>
+  </div>
 </div>
 
 <!-- タスク追加・編集モーダル -->
@@ -191,11 +334,19 @@
   <form method="dialog" id="taskForm">
     <div class="modal-head" id="dialogTitle">タスク追加</div>
     <div class="modal-body">
-      <div class="field-row">
-        <div class="field">
-          <label for="inpPriority">優先順位</label>
-          <input type="text" id="inpPriority" placeholder="例: 1 / 高 / 担当名">
+      <div class="field">
+        <label>優先順位</label>
+        <div class="prio-chips">
+          <button type="button" data-prio="1">1</button>
+          <button type="button" data-prio="2">2</button>
+          <button type="button" data-prio="3">3</button>
+          <button type="button" data-prio="高">高</button>
+          <button type="button" data-prio="中">中</button>
+          <button type="button" data-prio="低">低</button>
         </div>
+        <input type="text" id="inpPriority" placeholder="例: 1 / 高 / 担当名（上のボタンでも入力できます）">
+      </div>
+      <div class="field-row two">
         <div class="field">
           <label for="inpCategory">カテゴリ</label>
           <input type="text" id="inpCategory" list="categoryList" placeholder="例: 経理">
@@ -214,13 +365,25 @@
         <label for="inpDetail">詳細</label>
         <textarea id="inpDetail" placeholder="補足・メモ・参考URLなど"></textarea>
       </div>
-      <div class="field">
-        <label for="inpStatus">状態</label>
-        <select id="inpStatus">
-          <option value="todo">未着手</option>
-          <option value="doing">進行中</option>
-          <option value="done">完了</option>
-        </select>
+      <div class="field-row two">
+        <div class="field">
+          <label for="inpQuad">マトリクス配置（緊急度×重要度）</label>
+          <select id="inpQuad">
+            <option value="none">未分類</option>
+            <option value="q1">🔥 第1領域（緊急×重要）</option>
+            <option value="q2">🌱 第2領域（緊急でない×重要）</option>
+            <option value="q3">⚡ 第3領域（緊急×重要でない）</option>
+            <option value="q4">💤 第4領域（緊急でない×重要でない）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="inpStatus">状態</label>
+          <select id="inpStatus">
+            <option value="todo">未着手</option>
+            <option value="doing">進行中</option>
+            <option value="done">完了</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="modal-foot">
@@ -230,40 +393,89 @@
   </form>
 </dialog>
 
+<!-- AI一括入力モーダル -->
+<dialog id="aiDialog">
+  <div class="modal-head">✨ AI一括入力 — 箇条書きからタスクを自動割り振り</div>
+  <div class="modal-body">
+    <div class="field">
+      <label for="bulkInput">箇条書きを貼り付け（1行 = 1タスク）</label>
+      <textarea id="bulkInput" rows="7" placeholder="・見積書を至急作成する 2h
+・来月のセミナー資料づくり
+・経費精算 30分
+・SNSの投稿ネタ出し"></textarea>
+      <p class="ai-note">優先順位・カテゴリ・作業予定時間・緊急度/重要度を自動で判定して割り振ります。実行後、取り込む前に修正できます。</p>
+    </div>
+    <details class="ai-settings">
+      <summary>⚙ AI設定（任意）— Claude APIキーを使うと精度が上がります</summary>
+      <div class="ai-key-row">
+        <input type="password" id="apiKeyInput" placeholder="sk-ant-... （未設定でも内蔵の自動判定で動きます）">
+        <button type="button" class="btn-ghost" id="saveKeyBtn">保存</button>
+      </div>
+      <p class="ai-note">キーはこのブラウザ内（localStorage）にのみ保存され、Anthropic API以外には送信されません。</p>
+    </details>
+    <button type="button" class="btn-ai" id="parseBtn">✨ 割り振り実行</button>
+    <p class="ai-status" id="aiStatus"></p>
+    <div class="preview-wrap" id="previewWrap" hidden>
+      <table>
+        <thead>
+          <tr><th></th><th>優先順位</th><th>カテゴリ</th><th>予定時間</th><th>内容</th><th>マトリクス</th></tr>
+        </thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button type="button" class="btn-ghost" id="aiCancelBtn">閉じる</button>
+    <button type="button" class="btn-primary" id="importBtn" hidden>チェックした行を取り込む</button>
+  </div>
+</dialog>
+
 <script>
 (() => {
   const STORAGE_KEY = 'todoAppTasks_v1';
+  const API_KEY_STORAGE = 'todoAppClaudeKey';
   const STATUS_LABEL = { todo: '未着手', doing: '進行中', done: '完了' };
+  const QUAD_LABEL = { q1: '🔥第1領域', q2: '🌱第2領域', q3: '⚡第3領域', q4: '💤第4領域' };
 
   // 見本スプレッドシートに基づく初期サンプルデータ
   const SAMPLE_TASKS = [
-    { priority: '1', category: '書類確認', time: '', title: 'キーサンの書類を読む', detail: '日本政策金融公庫に出す書類これでいいかの確認。公庫に提出する必要書類の確認、キーサンが何をしたいかを確認する。\nhttps://drive.google.com/drive/folders/1I9At4neQWaSEeazaRmvO8PTCml82eG1T', status: 'todo' },
-    { priority: '2', category: '経理', time: '', title: '売上の確認、整理', detail: '売上管理', status: 'todo' },
-    { priority: '3', category: '経理', time: '', title: '予算の策定', detail: 'Moneyforwardをさやに共有', status: 'todo' },
-    { priority: '4', category: '法務', time: '', title: '新法人設立に関するリスク洗い出し', detail: '', status: 'todo' },
-    { priority: '5', category: '経理', time: '', title: '経費の整理', detail: '', status: 'todo' },
-    { priority: '6', category: '経理', time: '', title: '補助金の使い方', detail: '', status: 'todo' },
-    { priority: '7', category: '資料作成', time: '', title: '資料作成（セミナー用などなど）', detail: '', status: 'todo' },
-    { priority: '8', category: 'マーケティング', time: '', title: 'ウェブサイトの更新', detail: '', status: 'todo' },
-    { priority: '9', category: 'マーケティング', time: '', title: 'Google広告の運用の現状把握', detail: '', status: 'todo' },
-    { priority: '10', category: '事業企画', time: '', title: '採用定着士に関して', detail: '', status: 'todo' },
-    { priority: '', category: 'マーケティング', time: '', title: 'X活用', detail: 'URLをショートにしてリンクを飛ばす', status: 'todo' },
-    { priority: '', category: 'マーケティング', time: '', title: 'ウェブサイトのブログ', detail: '①ペルソナ設定 ②テーマ設定（出入国在留管理庁、法務省、厚労省、WAM NETから情報収集） ③タイトル検討', status: 'todo' },
+    { priority: '1', category: '書類確認', time: '', title: 'キーサンの書類を読む', detail: '日本政策金融公庫に出す書類これでいいかの確認。公庫に提出する必要書類の確認、キーサンが何をしたいかを確認する。\nhttps://drive.google.com/drive/folders/1I9At4neQWaSEeazaRmvO8PTCml82eG1T', status: 'todo', quad: 'q1' },
+    { priority: '2', category: '経理', time: '', title: '売上の確認、整理', detail: '売上管理', status: 'todo', quad: 'q1' },
+    { priority: '3', category: '経理', time: '', title: '予算の策定', detail: 'Moneyforwardをさやに共有', status: 'todo', quad: 'q2' },
+    { priority: '4', category: '法務', time: '', title: '新法人設立に関するリスク洗い出し', detail: '', status: 'todo', quad: 'q2' },
+    { priority: '5', category: '経理', time: '', title: '経費の整理', detail: '', status: 'todo', quad: 'none' },
+    { priority: '6', category: '経理', time: '', title: '補助金の使い方', detail: '', status: 'todo', quad: 'none' },
+    { priority: '7', category: '資料作成', time: '', title: '資料作成（セミナー用などなど）', detail: '', status: 'todo', quad: 'none' },
+    { priority: '8', category: 'マーケティング', time: '', title: 'ウェブサイトの更新', detail: '', status: 'todo', quad: 'none' },
+    { priority: '9', category: 'マーケティング', time: '', title: 'Google広告の運用の現状把握', detail: '', status: 'todo', quad: 'none' },
+    { priority: '10', category: '事業企画', time: '', title: '採用定着士に関して', detail: '', status: 'todo', quad: 'none' },
+    { priority: '', category: 'マーケティング', time: '', title: 'X活用', detail: 'URLをショートにしてリンクを飛ばす', status: 'todo', quad: 'none' },
+    { priority: '', category: 'マーケティング', time: '', title: 'ウェブサイトのブログ', detail: '①ペルソナ設定 ②テーマ設定（出入国在留管理庁、法務省、厚労省、WAM NETから情報収集） ③タイトル検討', status: 'todo', quad: 'none' },
   ];
 
   let tasks = load();
-  let sortKey = 'no';
+  let currentView = 'list';
   let sortAsc = true;
   let editingId = null;
+  let dragTaskId = null;   // マトリクスのカードDnD
+  let dragRowId = null;    // リストの行DnD
+  let previewItems = [];   // AI割り振りプレビュー
 
   const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
   const taskBody = $('#taskBody');
   const dialog = $('#taskDialog');
+  const aiDialog = $('#aiDialog');
 
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const list = JSON.parse(raw);
+        // 旧バージョンのデータに quad フィールドを補完
+        list.forEach((t) => { if (!t.quad) t.quad = 'none'; });
+        return list;
+      }
     } catch (e) { /* 破損時はサンプルで初期化 */ }
     return SAMPLE_TASKS.map((t, i) => ({ id: 'seed-' + i, createdAt: i, ...t }));
   }
@@ -277,7 +489,6 @@
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  // URLをリンク化（エスケープ後に適用）
   function linkify(escaped) {
     return escaped.replace(/(https?:\/\/[^\s<]+)/g,
       '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
@@ -289,7 +500,11 @@
     if (p === '高') return 0.1;
     if (p === '中') return 500;
     if (p === '低') return 900;
-    return p ? 1000 : 2000; // 文字列指定 → 数値の後ろ、未設定 → 最後
+    return p ? 1000 : 2000;
+  }
+
+  function newId() {
+    return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
   }
 
   function visibleTasks() {
@@ -306,37 +521,231 @@
       return true;
     });
     const dir = sortAsc ? 1 : -1;
-    if (sortKey === 'priority') {
-      list.sort((a, b) => (priorityRank(a.priority) - priorityRank(b.priority)) * dir || a.createdAt - b.createdAt);
-    } else {
-      list.sort((a, b) => (a.createdAt - b.createdAt) * dir);
-    }
+    list.sort((a, b) => (priorityRank(a.priority) - priorityRank(b.priority)) * dir || a.createdAt - b.createdAt);
     return list;
   }
 
-  function render() {
+  /* ===================== リストビュー ===================== */
+
+  function fieldCell(t, field, cls) {
+    const raw = t[field] ?? '';
+    let inner;
+    if (field === 'priority') {
+      const prioClass = ['1', '2', '3', '高'].includes(String(raw).trim()) ? 'prio-high' : '';
+      inner = raw ? `<span class="badge prio ${prioClass}">${escapeHtml(raw)}</span>` : '<span class="empty-cell">＋</span>';
+    } else if (field === 'category') {
+      inner = raw ? `<span class="badge cat">${escapeHtml(raw)}</span>` : '<span class="empty-cell">＋</span>';
+    } else if (field === 'time') {
+      inner = raw ? `<span class="badge time">${escapeHtml(raw)}</span>` : '<span class="empty-cell">＋</span>';
+    } else if (field === 'title') {
+      inner = `<div class="task-title">${linkify(escapeHtml(raw))}</div>`;
+    } else {
+      inner = raw ? `<div class="task-detail">${linkify(escapeHtml(raw))}</div>` : '<span class="empty-cell">＋</span>';
+    }
+    return `<td data-field="${field}" class="${cls || ''}" title="クリックで編集">${inner}</td>`;
+  }
+
+  function renderList() {
     const list = visibleTasks();
-    taskBody.innerHTML = list.map((t, i) => {
+    taskBody.innerHTML = list.map((t) => {
       const no = tasks.indexOf(t) + 1;
-      const prioClass = ['1', '2', '3', '高'].includes(String(t.priority).trim()) ? 'prio-high' : '';
+      const quadBadge = t.quad && t.quad !== 'none' ? ` <span class="badge cat" title="マトリクス配置">${QUAD_LABEL[t.quad]}</span>` : '';
       return `
       <tr class="${t.status === 'done' ? 'done' : ''}" data-id="${t.id}">
+        <td class="col-handle" draggable="true" title="ドラッグで並べ替え（優先順位を振り直し）">⋮⋮</td>
         <td class="col-check"><input type="checkbox" ${t.status === 'done' ? 'checked' : ''} title="完了にする" data-act="toggle"></td>
         <td class="col-no">${no}</td>
-        <td>${t.priority ? `<span class="badge prio ${prioClass}">${escapeHtml(t.priority)}</span>` : ''}</td>
-        <td>${t.category ? `<span class="badge cat">${escapeHtml(t.category)}</span>` : ''}</td>
-        <td>${t.time ? `<span class="badge time">${escapeHtml(t.time)}</span>` : ''}</td>
-        <td><div class="task-title">${linkify(escapeHtml(t.title))}</div></td>
-        <td><div class="task-detail">${linkify(escapeHtml(t.detail))}</div></td>
+        ${fieldCell(t, 'priority')}
+        ${fieldCell(t, 'category')}
+        ${fieldCell(t, 'time')}
+        ${fieldCell(t, 'title')}
+        <td data-field="detail" title="クリックで編集">${t.detail ? `<div class="task-detail">${linkify(escapeHtml(t.detail))}</div>` : '<span class="empty-cell">＋</span>'}${quadBadge}</td>
         <td><span class="badge status-${t.status}" data-act="cycle" style="cursor:pointer" title="クリックで状態切替">${STATUS_LABEL[t.status]}</span></td>
         <td class="col-actions">
-          <button class="btn-icon" data-act="edit" title="編集">✏️</button>
+          <button class="btn-icon" data-act="edit" title="詳細編集">✏️</button>
           <button class="btn-icon" data-act="delete" title="削除">🗑️</button>
         </td>
       </tr>`;
     }).join('');
-
     $('#emptyState').hidden = list.length > 0;
+  }
+
+  // インライン編集
+  function startInlineEdit(td, task) {
+    if (td.querySelector('.inline-input, .inline-textarea')) return;
+    const field = td.dataset.field;
+    const isMultiline = field === 'title' || field === 'detail';
+    const el = document.createElement(isMultiline ? 'textarea' : 'input');
+    el.className = isMultiline ? 'inline-textarea' : 'inline-input';
+    el.value = task[field] ?? '';
+    td.innerHTML = '';
+    td.appendChild(el);
+    el.focus();
+    el.select();
+    let cancelled = false;
+    const commit = () => {
+      if (cancelled) return;
+      const v = el.value.trim();
+      if (field === 'title' && !v) { render(); return; } // 内容は空にできない
+      task[field] = v;
+      save();
+      render();
+    };
+    el.addEventListener('blur', commit);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (!isMultiline || e.ctrlKey || e.metaKey)) { e.preventDefault(); el.blur(); }
+      if (e.key === 'Escape') { cancelled = true; render(); }
+    });
+  }
+
+  taskBody.addEventListener('click', (e) => {
+    if (e.target.tagName === 'A') return; // リンクはそのまま開く
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    const tr = e.target.closest('tr');
+    if (!tr) return;
+    const task = tasks.find((t) => t.id === tr.dataset.id);
+    if (!task) return;
+    if (act === 'toggle') {
+      task.status = e.target.checked ? 'done' : 'todo';
+    } else if (act === 'cycle') {
+      task.status = { todo: 'doing', doing: 'done', done: 'todo' }[task.status];
+    } else if (act === 'edit') {
+      openDialog(task);
+      return;
+    } else if (act === 'delete') {
+      if (!confirm(`「${task.title}」を削除しますか？`)) return;
+      tasks = tasks.filter((t) => t.id !== task.id);
+    } else {
+      const td = e.target.closest('td[data-field]');
+      if (td) { startInlineEdit(td, task); }
+      return;
+    }
+    save();
+    render();
+  });
+
+  // 行のドラッグ並べ替え → 優先順位を振り直し
+  taskBody.addEventListener('dragstart', (e) => {
+    const handle = e.target.closest('.col-handle');
+    if (!handle) return;
+    const tr = handle.closest('tr');
+    dragRowId = tr.dataset.id;
+    tr.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragRowId);
+  });
+  taskBody.addEventListener('dragover', (e) => {
+    if (!dragRowId) return;
+    e.preventDefault();
+    const tr = e.target.closest('tr');
+    $$('#taskBody tr').forEach((r) => r.classList.remove('drop-above'));
+    if (tr && tr.dataset.id !== dragRowId) tr.classList.add('drop-above');
+  });
+  taskBody.addEventListener('drop', (e) => {
+    if (!dragRowId) return;
+    e.preventDefault();
+    const targetTr = e.target.closest('tr');
+    const order = visibleTasks();
+    const fromIdx = order.findIndex((t) => t.id === dragRowId);
+    let toIdx = targetTr ? order.findIndex((t) => t.id === targetTr.dataset.id) : order.length;
+    if (fromIdx < 0) return;
+    const [moved] = order.splice(fromIdx, 1);
+    if (toIdx > fromIdx) toIdx--;
+    if (toIdx < 0) toIdx = order.length;
+    order.splice(toIdx, 0, moved);
+    order.forEach((t, i) => { t.priority = String(i + 1); }); // 表示中のタスクに 1..n を振り直し
+    sortAsc = true;
+    save();
+    render();
+  });
+  taskBody.addEventListener('dragend', () => {
+    dragRowId = null;
+    $$('#taskBody tr').forEach((r) => r.classList.remove('drop-above', 'dragging'));
+  });
+
+  /* ===================== マトリクスビュー ===================== */
+
+  function cardHtml(t) {
+    return `
+    <div class="card ${t.status === 'done' ? 'done' : ''}" draggable="true" data-id="${t.id}">
+      <input type="checkbox" ${t.status === 'done' ? 'checked' : ''} title="完了" data-act="toggle">
+      <div>
+        <div class="card-title">${escapeHtml(t.title)}</div>
+        <div class="card-meta">
+          ${t.priority ? `<span class="badge prio">${escapeHtml(t.priority)}</span>` : ''}
+          ${t.category ? `<span class="badge cat">${escapeHtml(t.category)}</span>` : ''}
+          ${t.time ? `<span class="badge time">${escapeHtml(t.time)}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderMatrix() {
+    const list = visibleTasks().filter((t) => t.status !== 'done' || $('#filterStatus').value === 'done');
+    $$('#matrixView [data-quad]').forEach((zone) => {
+      const quad = zone.dataset.quad;
+      zone.querySelector('.cards').innerHTML =
+        list.filter((t) => (t.quad || 'none') === quad).map(cardHtml).join('');
+    });
+  }
+
+  const matrixView = $('#matrixView');
+
+  matrixView.addEventListener('dragstart', (e) => {
+    const card = e.target.closest('.card');
+    if (!card) return;
+    dragTaskId = card.dataset.id;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragTaskId);
+  });
+  matrixView.addEventListener('dragend', () => {
+    dragTaskId = null;
+    $$('.quadrant, .tray, .done-zone').forEach((z) => z.classList.remove('drag-over'));
+    $$('.card').forEach((c) => c.classList.remove('dragging'));
+  });
+  matrixView.addEventListener('dragover', (e) => {
+    const zone = e.target.closest('[data-quad], .done-zone');
+    if (!zone || !dragTaskId) return;
+    e.preventDefault();
+    $$('.quadrant, .tray, .done-zone').forEach((z) => z.classList.remove('drag-over'));
+    zone.classList.add('drag-over');
+  });
+  matrixView.addEventListener('drop', (e) => {
+    const zone = e.target.closest('[data-quad], .done-zone');
+    if (!zone || !dragTaskId) return;
+    e.preventDefault();
+    const task = tasks.find((t) => t.id === dragTaskId);
+    if (!task) return;
+    if (zone.id === 'doneZone') {
+      task.status = 'done';
+    } else {
+      task.quad = zone.dataset.quad;
+      // 第1領域に置いたら未着手→進行中に格上げ
+      if (task.quad === 'q1' && task.status === 'todo') task.status = 'doing';
+    }
+    save();
+    render();
+  });
+  matrixView.addEventListener('click', (e) => {
+    const card = e.target.closest('.card');
+    if (!card) return;
+    const task = tasks.find((t) => t.id === card.dataset.id);
+    if (!task) return;
+    if (e.target.dataset.act === 'toggle') {
+      task.status = e.target.checked ? 'done' : 'todo';
+      save();
+      render();
+      return;
+    }
+    openDialog(task);
+  });
+
+  /* ===================== 共通描画 ===================== */
+
+  function render() {
+    renderList();
+    renderMatrix();
     $('#statTotal').textContent = tasks.length;
     $('#statDoing').textContent = tasks.filter((t) => t.status === 'doing').length;
     $('#statDone').textContent = tasks.filter((t) => t.status === 'done').length;
@@ -353,6 +762,18 @@
     $('#categoryList').innerHTML = cats.map((c) => `<option value="${escapeHtml(c)}">`).join('');
   }
 
+  // タブ切替
+  $$('.tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      currentView = tab.dataset.view;
+      $$('.tab').forEach((t) => t.classList.toggle('active', t === tab));
+      $('#listView').style.display = currentView === 'list' ? '' : 'none';
+      matrixView.style.display = currentView === 'matrix' ? 'block' : 'none';
+    });
+  });
+
+  /* ===================== 追加・編集モーダル ===================== */
+
   function openDialog(task) {
     editingId = task ? task.id : null;
     $('#dialogTitle').textContent = task ? 'タスク編集' : 'タスク追加';
@@ -361,12 +782,16 @@
     $('#inpTime').value = task?.time ?? '';
     $('#inpTitle').value = task?.title ?? '';
     $('#inpDetail').value = task?.detail ?? '';
+    $('#inpQuad').value = task?.quad ?? 'none';
     $('#inpStatus').value = task?.status ?? 'todo';
     dialog.showModal();
     $('#inpTitle').focus();
   }
 
-  // イベント
+  $$('.prio-chips button').forEach((b) => {
+    b.addEventListener('click', () => { $('#inpPriority').value = b.dataset.prio; });
+  });
+
   $('#addBtn').addEventListener('click', () => openDialog(null));
   $('#cancelBtn').addEventListener('click', () => dialog.close());
 
@@ -378,66 +803,214 @@
       time: $('#inpTime').value.trim(),
       title: $('#inpTitle').value.trim(),
       detail: $('#inpDetail').value.trim(),
+      quad: $('#inpQuad').value,
       status: $('#inpStatus').value,
     };
     if (!data.title) return;
     if (editingId) {
-      const t = tasks.find((t) => t.id === editingId);
-      Object.assign(t, data);
+      Object.assign(tasks.find((t) => t.id === editingId), data);
     } else {
-      tasks.push({ id: 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), createdAt: Date.now(), ...data });
+      tasks.push({ id: newId(), createdAt: Date.now(), ...data });
     }
     save();
     render();
     dialog.close();
   });
 
-  taskBody.addEventListener('click', (e) => {
-    const act = e.target.closest('[data-act]')?.dataset.act;
-    if (!act) return;
-    const id = e.target.closest('tr').dataset.id;
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
-    if (act === 'toggle') {
-      task.status = e.target.checked ? 'done' : 'todo';
-    } else if (act === 'cycle') {
-      task.status = { todo: 'doing', doing: 'done', done: 'todo' }[task.status];
-    } else if (act === 'edit') {
-      openDialog(task);
-      return;
-    } else if (act === 'delete') {
-      if (!confirm(`「${task.title}」を削除しますか？`)) return;
-      tasks = tasks.filter((t) => t.id !== id);
-    }
-    save();
-    render();
-  });
+  /* ===================== ツールバー ===================== */
 
   ['searchBox', 'filterCategory', 'filterStatus'].forEach((id) => {
     $('#' + id).addEventListener('input', render);
   });
 
-  document.querySelectorAll('th.sortable').forEach((th) => {
-    th.addEventListener('click', () => {
-      const key = th.dataset.sort;
-      if (sortKey === key) { sortAsc = !sortAsc; } else { sortKey = key; sortAsc = true; }
-      document.querySelectorAll('th.sortable .arrow').forEach((a) => (a.textContent = ''));
-      th.querySelector('.arrow').textContent = sortAsc ? '▲' : '▼';
-      render();
-    });
+  $('th.sortable') && $('th.sortable').addEventListener('click', () => {
+    sortAsc = !sortAsc;
+    $('th.sortable .arrow').textContent = sortAsc ? '▲' : '▼';
+    render();
   });
 
   $('#exportBtn').addEventListener('click', () => {
-    const header = ['No.', '優先順位', 'カテゴリ', '作業予定時間', '内容', '詳細', '状態'];
+    const header = ['No.', '優先順位', 'カテゴリ', '作業予定時間', '内容', '詳細', 'マトリクス', '状態'];
     const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const rows = tasks.map((t, i) =>
-      [i + 1, t.priority, t.category, t.time, t.title, t.detail, STATUS_LABEL[t.status]].map(esc).join(','));
+      [i + 1, t.priority, t.category, t.time, t.title, t.detail,
+       t.quad !== 'none' ? QUAD_LABEL[t.quad] : '', STATUS_LABEL[t.status]].map(esc).join(','));
     const csv = '﻿' + [header.map(esc).join(','), ...rows].join('\r\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     a.download = 'todo.csv';
     a.click();
     URL.revokeObjectURL(a.href);
+  });
+
+  /* ===================== AI一括入力 ===================== */
+
+  const CATEGORY_RULES = [
+    ['経理', /売上|経費|予算|補助金|請求|入金|支払|会計|決算|精算|money\s*forward/i],
+    ['マーケティング', /広告|SNS|ウェブ|サイト|ブログ|チラシ|マーケ|SEO|集客|インスタ|youtube|X活用|ツイート|投稿|メルマガ|LP/i],
+    ['書類確認', /書類|申請|提出|公庫|様式|フォーム/],
+    ['法務', /法人|訴訟|契約|リスク|規約|登記|許認可/],
+    ['資料作成', /資料|セミナー|スライド|プレゼン|パワポ|レジュメ/],
+    ['採用', /採用|求人|面接|インディード|リンクトイン|ビザスク|定着/i],
+  ];
+
+  function parseLineLocally(rawLine, existingCats) {
+    let line = rawLine.trim();
+    if (!line) return null;
+    let priority = '';
+    // 行頭の箇条書き記号・番号を除去（番号は優先順位として利用）
+    const numMark = line.match(/^\s*(\d{1,2})[.)．、]\s*/);
+    if (numMark) { priority = numMark[1]; line = line.slice(numMark[0].length); }
+    const circled = line.match(/^\s*([①-⑳])\s*/);
+    if (circled) { priority = String('①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'.indexOf(circled[1]) + 1); line = line.slice(circled[0].length); }
+    line = line.replace(/^\s*[-*・◦●○▪️☐□]\s*/, '').trim();
+    if (!line) return null;
+
+    // 優先度マーカー
+    const prioMark = line.match(/【(高|中|低)】|\[(高|中|低)\]/);
+    if (prioMark) { priority = prioMark[1] || prioMark[2]; line = line.replace(prioMark[0], '').trim(); }
+    const urgentWord = /至急|今すぐ|緊急|今日中|ASAP|急ぎ/i.test(line);
+    const deadlineWord = /締切|期限|〆切|まで(に)?[!！]?/.test(line);
+    const importantWord = /重要|必須|マスト|最優先/.test(line);
+    const lowWord = /いつか|後回し|余裕があれば|そのうち|低優先/.test(line);
+    if (!priority) priority = urgentWord || importantWord ? '高' : lowWord ? '低' : '';
+
+    // 作業予定時間
+    let time = '';
+    const hm = line.match(/(\d+(?:\.\d+)?)\s*(時間|hr|h)/i);
+    const mm = line.match(/(\d+)\s*(分|min)/i);
+    if (hm) { time = hm[1] + 'h'; line = line.replace(hm[0], '').trim(); }
+    else if (mm) { time = mm[1] + '分'; line = line.replace(mm[0], '').trim(); }
+
+    // カテゴリ（既存カテゴリ名が含まれていれば優先、なければキーワード判定）
+    let category = existingCats.find((c) => c && line.includes(c)) || '';
+    if (!category) {
+      for (const [cat, re] of CATEGORY_RULES) {
+        if (re.test(line)) { category = cat; break; }
+      }
+    }
+
+    // マトリクス配置
+    const urgent = urgentWord || deadlineWord;
+    const important = importantWord || priority === '高' || priority === '1';
+    const quad = urgent && important ? 'q1' : !urgent && important ? 'q2'
+               : urgent ? 'q3' : lowWord ? 'q4' : 'none';
+
+    return { priority, category, time, title: line.replace(/\s{2,}/g, ' ').trim(), detail: '', quad };
+  }
+
+  async function parseWithClaude(text, existingCats, apiKey) {
+    const prompt = `以下の箇条書きのタスクリストを解析し、各行を1つのタスクとしてJSON配列で返してください。
+各要素は {"title": "内容(簡潔なタスク名)", "detail": "補足があれば", "priority": "1〜nの数字か高/中/低か空文字", "category": "カテゴリ名", "time": "作業予定時間(例 2h, 30分)か空文字", "quad": "q1|q2|q3|q4|none"} の形式。
+quadはアイゼンハワーマトリクス: q1=緊急かつ重要, q2=緊急でないが重要, q3=緊急だが重要でない, q4=どちらでもない, none=判断できない。
+カテゴリは可能ならこの既存リストから選ぶ: ${JSON.stringify(existingCats)}。合わなければ新しい短いカテゴリ名を付ける。
+JSON配列のみを出力すること。説明文は不要。
+
+タスクリスト:
+${text}`;
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-5',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    if (!res.ok) throw new Error('APIエラー (' + res.status + ')');
+    const data = await res.json();
+    const textOut = (data.content || []).map((c) => c.text || '').join('');
+    const m = textOut.match(/\[[\s\S]*\]/);
+    if (!m) throw new Error('AIの応答を解析できませんでした');
+    return JSON.parse(m[0]).map((it) => ({
+      priority: String(it.priority ?? ''), category: it.category ?? '', time: it.time ?? '',
+      title: it.title ?? '', detail: it.detail ?? '',
+      quad: ['q1', 'q2', 'q3', 'q4'].includes(it.quad) ? it.quad : 'none',
+    })).filter((it) => it.title);
+  }
+
+  function renderPreview() {
+    const quadOpts = (sel) => ['none', 'q1', 'q2', 'q3', 'q4'].map((q) =>
+      `<option value="${q}" ${q === sel ? 'selected' : ''}>${q === 'none' ? '未分類' : QUAD_LABEL[q]}</option>`).join('');
+    $('#previewBody').innerHTML = previewItems.map((it, i) => `
+      <tr>
+        <td><input type="checkbox" data-i="${i}" data-f="use" ${it.use ? 'checked' : ''} style="width:16px"></td>
+        <td><input class="w-s" data-i="${i}" data-f="priority" value="${escapeHtml(it.priority)}"></td>
+        <td><input data-i="${i}" data-f="category" value="${escapeHtml(it.category)}"></td>
+        <td><input class="w-s" data-i="${i}" data-f="time" value="${escapeHtml(it.time)}"></td>
+        <td><input data-i="${i}" data-f="title" value="${escapeHtml(it.title)}"></td>
+        <td><select data-i="${i}" data-f="quad">${quadOpts(it.quad)}</select></td>
+      </tr>`).join('');
+    $('#previewWrap').hidden = previewItems.length === 0;
+    $('#importBtn').hidden = previewItems.length === 0;
+  }
+
+  $('#previewBody').addEventListener('input', (e) => {
+    const el = e.target;
+    const it = previewItems[+el.dataset.i];
+    if (!it) return;
+    it[el.dataset.f] = el.type === 'checkbox' ? el.checked : el.value;
+  });
+
+  $('#aiBtn').addEventListener('click', () => {
+    $('#apiKeyInput').value = localStorage.getItem(API_KEY_STORAGE) || '';
+    $('#aiStatus').textContent = '';
+    aiDialog.showModal();
+  });
+  $('#aiCancelBtn').addEventListener('click', () => aiDialog.close());
+  $('#saveKeyBtn').addEventListener('click', () => {
+    const k = $('#apiKeyInput').value.trim();
+    if (k) { localStorage.setItem(API_KEY_STORAGE, k); $('#aiStatus').textContent = 'APIキーを保存しました。'; }
+    else { localStorage.removeItem(API_KEY_STORAGE); $('#aiStatus').textContent = 'APIキーを削除しました。'; }
+    $('#aiStatus').classList.remove('error');
+  });
+
+  $('#parseBtn').addEventListener('click', async () => {
+    const text = $('#bulkInput').value.trim();
+    const status = $('#aiStatus');
+    status.classList.remove('error');
+    if (!text) { status.textContent = '箇条書きを入力してください。'; return; }
+    const existingCats = [...new Set(tasks.map((t) => t.category).filter(Boolean))];
+    const apiKey = $('#apiKeyInput').value.trim() || localStorage.getItem(API_KEY_STORAGE) || '';
+    let items = null;
+    if (apiKey) {
+      status.textContent = '✨ Claude AIで割り振り中…';
+      try {
+        items = await parseWithClaude(text, existingCats, apiKey);
+        status.textContent = `AIが ${items.length} 件のタスクに割り振りました。内容を確認して取り込んでください。`;
+      } catch (err) {
+        status.textContent = 'AI呼び出しに失敗したため内蔵の自動判定で割り振りました（' + err.message + '）';
+        status.classList.add('error');
+      }
+    }
+    if (!items) {
+      items = text.split(/\r?\n/).map((l) => parseLineLocally(l, existingCats)).filter(Boolean);
+      if (!apiKey) status.textContent = `内蔵の自動判定で ${items.length} 件に割り振りました。内容を確認して取り込んでください。`;
+    }
+    previewItems = items.map((it) => ({ ...it, use: true }));
+    renderPreview();
+  });
+
+  $('#importBtn').addEventListener('click', () => {
+    const chosen = previewItems.filter((it) => it.use && it.title.trim());
+    chosen.forEach((it) => {
+      tasks.push({
+        id: newId(), createdAt: Date.now() + Math.random(),
+        priority: it.priority.trim(), category: it.category.trim(), time: it.time.trim(),
+        title: it.title.trim(), detail: (it.detail || '').trim(), quad: it.quad, status: 'todo',
+      });
+    });
+    save();
+    render();
+    previewItems = [];
+    renderPreview();
+    $('#bulkInput').value = '';
+    aiDialog.close();
   });
 
   render();
