@@ -406,12 +406,16 @@
       <p class="ai-note">優先順位・カテゴリ・作業予定時間・緊急度/重要度を自動で判定して割り振ります。実行後、取り込む前に修正できます。</p>
     </div>
     <details class="ai-settings">
-      <summary>⚙ AI設定（任意）— Claude APIキーを使うと精度が上がります</summary>
+      <summary>⚙ AI設定（任意）— APIキーを使うと精度が上がります（Gemini / Claude 対応）</summary>
       <div class="ai-key-row">
-        <input type="password" id="apiKeyInput" placeholder="sk-ant-... （未設定でも内蔵の自動判定で動きます）">
+        <input type="password" id="apiKeyInput" placeholder="Gemini: AIza... ／ Claude: sk-ant-... （未設定でも内蔵の自動判定で動きます）">
         <button type="button" class="btn-ghost" id="saveKeyBtn">保存</button>
       </div>
-      <p class="ai-note">キーはこのブラウザ内（localStorage）にのみ保存され、Anthropic API以外には送信されません。</p>
+      <p class="ai-note">
+        キーの形式から Gemini / Claude を自動判別します。
+        Geminiのキーは <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a> で無料で取得できます。
+        キーはこのブラウザ内（localStorage）にのみ保存され、AI各社のAPI以外には送信されません。
+      </p>
     </details>
     <button type="button" class="btn-ai" id="parseBtn">✨ 割り振り実行</button>
     <p class="ai-status" id="aiStatus"></p>
@@ -899,8 +903,8 @@
     return { priority, category, time, title: line.replace(/\s{2,}/g, ' ').trim(), detail: '', quad };
   }
 
-  async function parseWithClaude(text, existingCats, apiKey) {
-    const prompt = `以下の箇条書きのタスクリストを解析し、各行を1つのタスクとしてJSON配列で返してください。
+  function buildAiPrompt(text, existingCats) {
+    return `以下の箇条書きのタスクリストを解析し、各行を1つのタスクとしてJSON配列で返してください。
 各要素は {"title": "内容(簡潔なタスク名)", "detail": "補足があれば", "priority": "1〜nの数字か高/中/低か空文字", "category": "カテゴリ名", "time": "作業予定時間(例 2h, 30分)か空文字", "quad": "q1|q2|q3|q4|none"} の形式。
 quadはアイゼンハワーマトリクス: q1=緊急かつ重要, q2=緊急でないが重要, q3=緊急だが重要でない, q4=どちらでもない, none=判断できない。
 カテゴリは可能ならこの既存リストから選ぶ: ${JSON.stringify(existingCats)}。合わなければ新しい短いカテゴリ名を付ける。
@@ -908,6 +912,25 @@ JSON配列のみを出力すること。説明文は不要。
 
 タスクリスト:
 ${text}`;
+  }
+
+  // AIの応答テキストからJSON配列を取り出して整形
+  function parseAiJson(textOut) {
+    const m = textOut.match(/\[[\s\S]*\]/);
+    if (!m) throw new Error('AIの応答を解析できませんでした');
+    return JSON.parse(m[0]).map((it) => ({
+      priority: String(it.priority ?? ''), category: it.category ?? '', time: it.time ?? '',
+      title: it.title ?? '', detail: it.detail ?? '',
+      quad: ['q1', 'q2', 'q3', 'q4'].includes(it.quad) ? it.quad : 'none',
+    })).filter((it) => it.title);
+  }
+
+  // キーの形式でプロバイダを判別: AIza... → Gemini / sk-ant-... など → Claude
+  function detectProvider(apiKey) {
+    return apiKey.startsWith('AIza') ? 'gemini' : 'claude';
+  }
+
+  async function parseWithClaude(text, existingCats, apiKey) {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -916,22 +939,45 @@ ${text}`;
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
+      signal: AbortSignal.timeout(30000),
       body: JSON.stringify({
         model: 'claude-sonnet-5',
         max_tokens: 4000,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: buildAiPrompt(text, existingCats) }],
       }),
     });
-    if (!res.ok) throw new Error('APIエラー (' + res.status + ')');
+    if (!res.ok) throw new Error('Claude APIエラー (' + res.status + ')');
     const data = await res.json();
-    const textOut = (data.content || []).map((c) => c.text || '').join('');
-    const m = textOut.match(/\[[\s\S]*\]/);
-    if (!m) throw new Error('AIの応答を解析できませんでした');
-    return JSON.parse(m[0]).map((it) => ({
-      priority: String(it.priority ?? ''), category: it.category ?? '', time: it.time ?? '',
-      title: it.title ?? '', detail: it.detail ?? '',
-      quad: ['q1', 'q2', 'q3', 'q4'].includes(it.quad) ? it.quad : 'none',
-    })).filter((it) => it.title);
+    return parseAiJson((data.content || []).map((c) => c.text || '').join(''));
+  }
+
+  async function parseWithGemini(text, existingCats, apiKey) {
+    const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+    let lastErr = null;
+    for (const model of models) {
+      const res = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+        signal: AbortSignal.timeout(30000),
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: buildAiPrompt(text, existingCats) }] }],
+          generationConfig: { temperature: 0.2 },
+        }),
+      });
+      if (res.status === 404) { lastErr = new Error('Gemini APIエラー (404)'); continue; } // 旧モデルへフォールバック
+      if (!res.ok) throw new Error('Gemini APIエラー (' + res.status + ')');
+      const data = await res.json();
+      const textOut = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('');
+      return parseAiJson(textOut);
+    }
+    throw lastErr || new Error('Gemini APIエラー');
+  }
+
+  function parseWithAI(text, existingCats, apiKey) {
+    return detectProvider(apiKey) === 'gemini'
+      ? parseWithGemini(text, existingCats, apiKey)
+      : parseWithClaude(text, existingCats, apiKey);
   }
 
   function renderPreview() {
@@ -979,10 +1025,11 @@ ${text}`;
     const apiKey = $('#apiKeyInput').value.trim() || localStorage.getItem(API_KEY_STORAGE) || '';
     let items = null;
     if (apiKey) {
-      status.textContent = '✨ Claude AIで割り振り中…';
+      const providerName = detectProvider(apiKey) === 'gemini' ? 'Gemini' : 'Claude';
+      status.textContent = `✨ ${providerName} AIで割り振り中…`;
       try {
-        items = await parseWithClaude(text, existingCats, apiKey);
-        status.textContent = `AIが ${items.length} 件のタスクに割り振りました。内容を確認して取り込んでください。`;
+        items = await parseWithAI(text, existingCats, apiKey);
+        status.textContent = `${providerName} AIが ${items.length} 件のタスクに割り振りました。内容を確認して取り込んでください。`;
       } catch (err) {
         status.textContent = 'AI呼び出しに失敗したため内蔵の自動判定で割り振りました（' + err.message + '）';
         status.classList.add('error');
